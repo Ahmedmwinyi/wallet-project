@@ -32,22 +32,28 @@ public class LoginLogoutCustomerServiceImplementation implements LoginLogoutCust
 
 	@Override
 	public CurrentCustomerSession loginCustomer(User user) throws LoginException, CustomerException {
-		BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
 		if ("Customer".equals(user.getRole())) {
+
 			Optional<Customer> optional_customer = customerRepo.findById(user.getMobileNumber());
 
 			if (optional_customer.isPresent()) {
+
 				Customer customer = optional_customer.get();
+
 				Optional<CurrentCustomerSession> optional_CurrentUserSession = Optional.ofNullable(currentCustomerSessionRepo
 						.findByCustomerMobileNumber(customer.getMobileNumber()));
 
 				if (optional_CurrentUserSession.isPresent()) {
+
 					throw new LoginException(
-							"User Already Logged In With This Customer Id: " + customer.getMobileNumber());
+							"User Already Logged In With This Customer Id : " + customer.getMobileNumber());
 				} else {
-					// Compare the password using bcrypt
-					if (bcrypt.matches(user.getPassword(), customer.getPassword())) {
+
+					if (user.getMobileNumber().equals(customer.getMobileNumber())
+							&& user.getPassword().equals(customer.getPassword())) {
+
 						CurrentCustomerSession currentCustomerSession = new CurrentCustomerSession();
+
 						String key = RandomString.make(6);
 
 						currentCustomerSession.setCustomerMobileNumber(customer.getMobileNumber());
@@ -55,15 +61,19 @@ public class LoginLogoutCustomerServiceImplementation implements LoginLogoutCust
 						currentCustomerSession.setLocalDateTime(LocalDateTime.now());
 
 						return currentCustomerSessionRepo.save(currentCustomerSession);
+
 					} else {
 						throw new LoginException("Invalid User_Id or Password");
 					}
 				}
+
 			} else {
-				throw new CustomerException("No Registered Customer Found With This User_Id: " + user.getMobileNumber());
+				throw new CustomerException("No Registered Customer Found With This User_Id : " + user.getMobileNumber());
 			}
+
 		} else {
-			throw new LoginException("Please, Select Customer as Role to Login!");
+
+			throw new LoginException("Please, Select Customer as Role to Login !");
 		}
 	}
 
@@ -86,7 +96,6 @@ public class LoginLogoutCustomerServiceImplementation implements LoginLogoutCust
 
 	}
 
-	// Use methods for Payments or some Very Highly Secured Operations//
 	@Override
 	public User authenticateCustomer(User user, String key) throws UserException, LoginException, CustomerException {
 

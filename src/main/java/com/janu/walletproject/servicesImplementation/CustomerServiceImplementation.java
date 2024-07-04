@@ -9,6 +9,7 @@ import com.janu.walletproject.model.User;
 import com.janu.walletproject.model.Wallet;
 import com.janu.walletproject.repository.CustomerRepo;
 import com.janu.walletproject.services.CustomerService;
+import com.janu.walletproject.services.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,9 @@ public class CustomerServiceImplementation implements CustomerService {
 
 	@Autowired
 	private CustomerRepo customerRepo;
+
+	@Autowired
+	private EmailService emailService;
 
 	@Autowired
 	private LoginLogoutCustomerServiceImplementation loginLogoutCustomerServiceimplementation;
@@ -36,43 +40,48 @@ public class CustomerServiceImplementation implements CustomerService {
 		Optional<Customer> find_customer = customerRepo.findById(customer.getMobileNumber());
 
 		if (find_customer.isEmpty()) {
-			// Encrypt the password
-			String encryptedPassword = passwordEncoder.encode(customer.getPassword());
-
-			// Set the encrypted password for the User entity
-			User user = new User();
-			user.setMobileNumber(customer.getMobileNumber());
-			user.setPassword(encryptedPassword);
-			user.setRole(customer.getRole());
-
-			customer.setUser(user);
-			// Set the encrypted password for the Customer entity
-			customer.setPassword(encryptedPassword);
-
-			System.out.println(user);
-			Customer added_customer = customerRepo.save(customer);
 
 			Wallet wallet = new Wallet();
-			System.out.println("200");
+
+			System.out.println("49");
 
 			wallet.setBalance(0.0);
+
 			wallet.setWalletId(customer.getMobileNumber());
+
 			customer.setWallet(wallet);
 
 			System.out.println(customer);
 			System.out.println(wallet);
 
-			added_customer = customerRepo.save(customer);
+			Customer added_customer = customerRepo.save(customer);
 
 			System.out.println("57");
 
 			if (added_customer != null) {
+				String emailSubject = "Welcome to Our Service!";
+				String emailText = "Dear " + customer.getFirstName() + " " + customer.getLastName() +
+						"Welcome to Our Wallet App! Your account has been successfully created, and you can now enjoy the convenience of managing your finances on the App.\n\n" +
+						"Here are some of the features you can start using right away:\n" +
+						"1. **Manage Your Balance:** Easily check your wallet balance and transaction history.\n" +
+						"2. **Secure Transactions:** Enjoy secure and fast transactions with our encrypted payment system.\n" +
+						"3. **Add Funds:** Add money to your wallet using various payment methods.\n" +
+						"4. **Send and Receive Money:** Transfer money to friends and family instantly.\n" +
+						"5. **Exclusive Offers:** Access special deals and promotions available only to our wallet users.\n\n" +
+						"To get started, simply log in to your account using your registered mobile number and password.\n\n" +
+						"If you have any questions or need assistance, our support team is here to help. Contact us at madiylal@gmail.com.\n\n" +
+						"Best Regards,\n" +
+						"The Wallet App Team";
+				emailService.sendSimpleEmail(customer.getEmail(), emailSubject, emailText);
+
 				return added_customer;
+
 			} else {
-				throw new CustomerException("Oops, Sign Up Unsuccessful!");
+				throw new CustomerException("OOps, Sign Up Unsuccessfull !");
 			}
 		} else {
-			throw new CustomerException("Customer Already Registered With This Mobile Number: " + customer.getMobileNumber());
+			throw new CustomerException(
+					"Customer Already Registered With This Mobile Number : " + customer.getMobileNumber());
 		}
 	}
 
